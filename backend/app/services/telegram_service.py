@@ -15,6 +15,18 @@ class TelegramServiceStub:
         self.enabled = False
         logger.info("TelegramService: Running in stub mode (no actual messages sent)")
     
+    async def health_check(self) -> str:
+        """
+        Lightweight health check for Telegram integration.
+        
+        Returns:
+            str: Simple status string for /health endpoint.
+        """
+        # In stub mode we always report "stub" but keep the same interface
+        # as the real Telegram service.
+        logger.debug("TelegramServiceStub.health_check called")
+        return "stub"
+    
     async def send_message(self, chat_id: str, text: str, parse_mode: str = "HTML"):
         """Log message instead of sending."""
         logger.info(f"[TELEGRAM STUB] Would send to {chat_id}: {text[:100]}...")
