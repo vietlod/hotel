@@ -53,6 +53,21 @@ services:
       retries: 3
       start_period: 10s
 
+  # Frontend (Port 8003 to avoid conflict)
+  hotel-frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: hotel-frontend
+    restart: unless-stopped
+    depends_on:
+      hotel-backend:
+        condition: service_healthy
+    ports:
+      - "8003:80"
+    networks:
+      - hotel-network
+
 networks:
   hotel-network:
     name: hotel-network

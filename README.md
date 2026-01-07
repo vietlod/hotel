@@ -60,7 +60,7 @@ alembic upgrade head
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
 ### 5. Run Celery Worker (for async tasks)
@@ -73,8 +73,8 @@ celery -A app.tasks worker --loglevel=info
 ## 📖 API Documentation
 
 After starting the server, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:8002/docs
+- ReDoc: http://localhost:8002/redoc
 
 ## 🔑 Required Accounts
 

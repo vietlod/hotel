@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+deploy_hotel_pms.ps1
 __pycache__/
 *.py[cod]
 *$py.class

@@ -1,0 +1,313 @@
+---
+alwaysApply: true
+---
+
+# Code Quality Standards for ECODATA
+
+## Python Standards (FastAPI)
+
+### Type Hints & Pydantic
+
+```python
+# CORRECT: Full type hints with Pydantic models
+from pydantic import BaseModel, Field, validator
+from typing import List, Optional
+from datetime import datetime
+
+class IndicatorResponse(BaseModel):
+    """Indicator data model matching frontend interface."""
+    id: str = Field(..., description="Unique indicator code")
+    name: str
+    source: str
+    country: Optional[str]
+    frequency: str
+    values: List[dict]  # [{year: int, value: float}]
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "WB_001",
+                "name": "GDP Growth",
+                "source": "WB",
+                "country": "VN",
+                "frequency": "annual",
+                "values": [{"year": 2023, "value": 100.5}]
+            }
+        }
+
+# WRONG: Using dict without typing
+def get_indicator(source):
+    return {"data": "..."}
+
+# CORRECT: Type hints on function signature
+async def get_indicators(
+    source: str,
+    frequency: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[IndicatorResponse]:
+    """Fetch indicators from database."""
+    # Implementation
+```
+
+### Async/Await for I/O
+```python
+# CORRECT: All database and external API calls are async
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends
+
+@router.get("/api/indicators")
+async def list_indicators(
+    db: AsyncSession = Depends(get_db),
+    source: Optional[str] = None,
+    limit: int = 100
+) -> List[IndicatorResponse]:
+    """Get indicators with optional source filter."""
+    try:
+        query = select(Indicator)
+        if source:
+            query = query.where(Indicator.source == source)
+        
+        result = await db.execute(query.limit(limit))
+        indicators = result.scalars().all()
+        return [IndicatorResponse.from_orm(ind) for ind in indicators]
+    except Exception as e:
+        logger.error(f"Error fetching indicators: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database error")
+```
+
+### Error Handling
+```python
+# CORRECT: Specific exception handling with proper HTTP status codes
+@router.post("/api/ingest/curl")
+async def ingest_curl(
+    payload: CurlPayload,
+    current_user: User = Depends(require_admin)
+):
+    """Parse and execute cURL command for data ingestion."""
+    try:
+        if not payload.curl_command:
+            raise ValueError("cURL command cannot be empty")
+        
+        # Parse and execute
+        result = parse_curl_and_execute(payload.curl_command)
+        
+        if not result:
+            raise ValueError("No data returned from API")
+        
+        return {"status": "success", "records_imported": len(result)}
+        
+    except ValueError as e:
+        logger.warning(f"Invalid input: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except TimeoutError:
+        logger.error("API request timeout")
+        raise HTTPException(status_code=504, detail="API timeout")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+```
+
+### Docstrings
+```python
+# CORRECT: Comprehensive docstrings
+async def export_indicators(
+    indicator_ids: List[str],
+    format: str = "csv",
+    db: AsyncSession = Depends(get_db)
+) -> FileResponse:
+    """
+    Export indicators to file format.
+    
+    Args:
+        indicator_ids: List of indicator codes to export
+        format: Export format (csv, json, parquet)
+        db: Database session
+        
+    Returns:
+        FileResponse with exported data
+        
+    Raises:
+        HTTPException: If indicators not found or format invalid
+        ValueError: If indicator_ids is empty
+        
+    Example:
+        POST /api/export
+        {
+            "indicator_ids": ["WB_001", "WB_002"],
+            "format": "csv"
+        }
+    """
+    # Implementation
+```
+
+## TypeScript Standards (React 19 + Vite)
+
+### Type Safety & Interfaces
+```typescript
+// CORRECT: Full type annotations
+interface FilterState {
+  selectedSources: string[];
+  frequency?: string;
+  geography?: 'global' | 'provincial';
+  countries?: string[];
+  completeness?: 'any' | 'partial' | 'complete';
+  pageSize: number;
+  pageNumber: number;
+}
+
+interface APIResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  timestamp: string;
+}
+
+// WRONG: Using any
+const indicators: any = [];
+
+// CORRECT: Specific types
+const indicators: IndicatorResponse[] = [];
+```
+
+### Component Architecture
+```typescript
+// CORRECT: Typed component with proper error boundaries
+interface ResultsPanelProps {
+  indicators: IndicatorResponse[];
+  loading: boolean;
+  error?: string;
+  onExport: (format: ExportFormat) => Promise<void>;
+}
+
+export const ResultsPanel: React.FC<ResultsPanelProps> = ({
+  indicators,
+  loading,
+  error,
+  onExport
+}) => {
+  const [isExporting, setIsExporting] = React.useState(false);
+  
+  const handleExport = async (format: ExportFormat) => {
+    try {
+      setIsExporting(true);
+      await onExport(format);
+    } catch (err) {
+      logger.error('Export failed', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
+  if (error) return <ErrorBoundary message={error} />;
+  if (loading) return <Skeleton />;
+  
+  return (
+    <div className="results-panel">
+      {/* Component JSX */}
+    </div>
+  );
+};
+```
+
+### API Service Layer
+```typescript
+// CORRECT: Type-safe API client
+class IndicatorAPI {
+  private baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  
+  async getIndicators(filters: FilterState): Promise<IndicatorResponse[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.selectedSources.length > 0) {
+        params.append('sources', filters.selectedSources.join(','));
+      }
+      if (filters.frequency) {
+        params.append('frequency', filters.frequency);
+      }
+      
+      const response = await fetch(`${this.baseUrl}/api/indicators?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data: APIResponse<IndicatorResponse[]> = await response.json();
+      return data.data;
+    } catch (error) {
+      logger.error('Failed to fetch indicators', error);
+      throw new Error(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+}
+```
+
+## Code Organization
+
+### File Structure
+```
+backend/
+├── routers/          # FastAPI route handlers
+├── models/           # SQLAlchemy ORM models
+├── schemas/          # Pydantic request/response schemas
+├── services/         # Business logic (crawl4ai, uncurl, exports)
+├── utils/            # Helper functions
+├── dependencies.py   # FastAPI dependencies (auth, db)
+└── main.py          # FastAPI app initialization
+
+frontend/
+├── components/       # Reusable React components
+├── pages/           # Page components
+├── services/        # API clients
+├── hooks/           # Custom React hooks
+├── types.ts         # TypeScript interfaces
+├── constants.ts     # Static data
+└── App.tsx          # Main router
+```
+
+### Naming Conventions
+```python
+# Python: snake_case
+def parse_curl_command(curl_str: str) -> dict: pass
+class IndicatorService: pass
+BATCH_SIZE = 100
+```
+
+```typescript
+// TypeScript: camelCase for functions/variables, PascalCase for types
+function parseFilterState(raw: unknown): FilterState { }
+const indicatorService = new IndicatorAPI();
+interface IndicatorResponse { }
+type ExportFormat = 'csv' | 'json' | 'parquet';
+```
+
+### Imports Organization
+```python
+# Python imports order
+import asyncio  # standard library
+from typing import Optional, List
+from datetime import datetime
+
+import sqlalchemy as sa  # third-party
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+from models import Indicator  # local imports
+from services.export import ExportService
+```
+
+```typescript
+// TypeScript imports order
+import React, { useState, useCallback } from 'react';  // React core
+import { useLocation } from 'react-router-dom';        // third-party
+
+import { IndicatorAPI } from '../services/api';        // local imports
+import { FilterPanel } from '../components/FilterPanel';
+import type { IndicatorResponse } from '../types';     // types last
+```
+
+---
+
+*Last Updated: December 31, 2025*
+*Project: ECODATA v2.7.2*
+*Status: Production Ready*

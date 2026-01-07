@@ -1,0 +1,232 @@
+---
+alwaysApply: true
+---
+
+# Database Standards for ECODATA
+
+## PostgreSQL + SQLAlchemy Best Practices
+
+### ORM Model Design
+
+```python
+# CORRECT: SQLAlchemy models with proper typing
+from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Index, Enum
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
+from enum import Enum as PyEnum
+
+Base = declarative_base()
+
+class Indicator(Base):
+    """Economic indicator model matching frontend interface."""
+    __tablename__ = "indicators"
+    
+    id = Column(String(36), primary_key=True)
+    name = Column(String(255), nullable=False)
+    source = Column(String(50), nullable=False, index=True)
+    country = Column(String(50), index=True)
+    frequency = Column(String(50), nullable=False)  # annual, quarterly, monthly
+    description = Column(String(500))
+    last_updated = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    values = relationship("IndicatorValue", cascade="all, delete-orphan", back_populates="indicator")
+    
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_source_country_frequency', 'source', 'country', 'frequency'),
+        Index('idx_last_updated', 'last_updated'),
+    )
+
+class IndicatorValue(Base):
+    """Time-series values for indicators."""
+    __tablename__ = "indicator_values"
+    
+    id = Column(String(36), primary_key=True)
+    indicator_id = Column(String(36), ForeignKey('indicators.id'), nullable=False, index=True)
+    year = Column(Integer, nullable=False, index=True)
+    value = Column(Float, nullable=False)
+    
+    indicator = relationship("Indicator", back_populates="values")
+    
+    __table_args__ = (
+        Index('idx_indicator_year', 'indicator_id', 'year'),
+    )
+```
+
+### Async Database Operations
+```python
+# CORRECT: Async SQLAlchemy queries
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy import select
+
+async def get_indicators(
+    db: AsyncSession,
+    sources: Optional[List[str]] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Indicator]:
+    """Fetch indicators with optional filtering."""
+    query = select(Indicator)
+    
+    if sources:
+        query = query.where(Indicator.source.in_(sources))
+    
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+async def get_indicator_values(
+    db: AsyncSession,
+    indicator_id: str,
+    start_year: Optional[int] = None,
+    end_year: Optional[int] = None
+) -> List[IndicatorValue]:
+    """Fetch time-series values for an indicator."""
+    query = select(IndicatorValue).where(
+        IndicatorValue.indicator_id == indicator_id
+    )
+    
+    if start_year:
+        query = query.where(IndicatorValue.year >= start_year)
+    if end_year:
+        query = query.where(IndicatorValue.year <= end_year)
+    
+    query = query.order_by(IndicatorValue.year)
+    result = await db.execute(query)
+    return result.scalars().all()
+```
+
+### Transaction Safety
+```python
+# CORRECT: Use transactions for atomic operations
+async def import_indicators(
+    db: AsyncSession,
+    indicators_data: List[dict]
+) -> int:
+    """Import multiple indicators atomically."""
+    try:
+        async with db.begin():  # Automatic transaction
+            imported_count = 0
+            for data in indicators_data:
+                indicator = Indicator(**data)
+                db.add(indicator)
+                imported_count += 1
+            
+            await db.flush()  # Flush within transaction
+        
+        await db.commit()  # Commit transaction
+        return imported_count
+    except Exception as e:
+        await db.rollback()  # Automatic on error
+        logger.error(f"Import failed: {str(e)}")
+        raise
+```
+
+### Connection Configuration
+```python
+# CORRECT: Async engine configuration
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.pool import NullPool
+
+DATABASE_URL = "postgresql+asyncpg://user:password@localhost/ecodata"
+
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+    pool_size=20,
+    max_overflow=10,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={"timeout": 30}
+)
+
+async def get_db() -> AsyncSession:
+    """Dependency for FastAPI to get database session."""
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with async_session() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+```
+
+### Index Strategy
+```python
+# CORRECT: Indexes for common queries
+class IndicatorIndexes(Base):
+    __tablename__ = "indicators"
+    
+    # Primary key (automatic)
+    id = Column(String(36), primary_key=True)
+    
+    # Frequently filtered columns
+    source = Column(String(50), index=True)
+    country = Column(String(50), index=True)
+    frequency = Column(String(50), index=True)
+    
+    # Composite index for common multi-column queries
+    __table_args__ = (
+        Index('idx_source_country', 'source', 'country'),
+        Index('idx_source_frequency', 'source', 'frequency'),
+        Index('idx_last_updated_desc', 'last_updated'),  # For sorting
+    )
+```
+
+### Data Integrity Constraints
+```python
+# CORRECT: Enforce data integrity at database level
+from sqlalchemy import CheckConstraint, UniqueConstraint
+
+class ImportBatch(Base):
+    __tablename__ = "import_batches"
+    
+    id = Column(String(36), primary_key=True)
+    status = Column(String(20), default='pending')  # pending, processing, complete, failed
+    imported_count = Column(Integer, default=0)
+    total_count = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    
+    # Ensure imported_count doesn't exceed total_count
+    __table_args__ = (
+        CheckConstraint('imported_count <= total_count'),
+        CheckConstraint('status IN (\'pending\', \'processing\', \'complete\', \'failed\')'),
+    )
+```
+
+### Query Optimization
+```python
+# CORRECT: Use eager loading for relationships
+from sqlalchemy.orm import selectinload
+
+async def get_indicator_with_values(
+    db: AsyncSession,
+    indicator_id: str
+) -> Optional[Indicator]:
+    """Fetch indicator with all related values (avoid N+1 queries)."""
+    query = (
+        select(Indicator)
+        .where(Indicator.id == indicator_id)
+        .options(selectinload(Indicator.values))  # Eager load
+    )
+    
+    result = await db.execute(query)
+    return result.scalar_one_or_none()
+
+# WRONG: Lazy loading (causes N+1 queries)
+async def bad_get_indicators(db: AsyncSession):
+    result = await db.execute(select(Indicator))
+    indicators = result.scalars().all()
+    
+    # Each access to indicator.values causes a query!
+    for indicator in indicators:
+        print(indicator.values)  # N+1 problem
+```
+
+---
+
+*Last Updated: December 31, 2025*
+*Project: ECODATA v2.7.2*
+*Status: Production Ready*

@@ -1,0 +1,361 @@
+---
+alwaysApply: true
+---
+
+# Testing Standards for ECODATA
+
+## Test Structure
+
+### Test File Organization
+```
+backend/
+├── tests/
+│   ├── unit/
+│   │   ├── test_services.py         # Service layer tests
+│   │   ├── test_schemas.py          # Pydantic model validation
+│   │   └── test_utils.py            # Utility function tests
+│   ├── integration/
+│   │   ├── test_api_indicators.py   # API endpoint tests
+│   │   ├── test_api_export.py       # Export functionality
+│   │   └── test_api_ingest.py       # Data ingestion
+│   ├── conftest.py                  # Pytest fixtures
+│   └── README.md                    # Test documentation
+
+frontend/
+├── __tests__/
+│   ├── components/
+│   │   ├── FilterPanel.test.tsx     # Component tests
+│   │   └── ResultsPanel.test.tsx
+│   ├── hooks/
+│   │   └── useIndicators.test.tsx   # Custom hook tests
+│   ├── services/
+│   │   └── api.test.ts              # API client tests
+│   └── setup.ts                     # Test configuration
+```
+
+### Pytest Setup for Backend
+
+```python
+# conftest.py - Shared fixtures
+import pytest
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from fastapi.testclient import TestClient
+from httpx import AsyncClient
+
+from main import app
+from models import Base
+
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+@pytest.fixture
+async def test_db():
+    """Create test database."""
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    async_session = sessionmaker(engine, class_=AsyncSession)
+    
+    async with async_session() as session:
+        yield session
+    
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    
+    await engine.dispose()
+
+@pytest.fixture
+async def client(test_db):
+    """Create test client."""
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
+
+@pytest.mark.asyncio
+async def test_get_indicators(client: AsyncClient):
+    """Test indicators endpoint."""
+    response = await client.get("/api/indicators")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+```
+
+## Unit Tests
+
+### Service Tests
+```python
+# tests/unit/test_services.py
+import pytest
+from services.export import ExportService
+from schemas import IndicatorResponse
+
+@pytest.mark.asyncio
+async def test_export_to_csv():
+    """Test CSV export functionality."""
+    service = ExportService()
+    
+    test_data = [
+        IndicatorResponse(
+            id="WB_001",
+            name="GDP",
+            source="WB",
+            frequency="annual",
+            values=[{"year": 2023, "value": 100.5}]
+        )
+    ]
+    
+    # CSV export should return bytes
+    result = service.to_csv(test_data)
+    assert isinstance(result, bytes)
+    assert b"GDP" in result
+    assert b"100.5" in result
+
+@pytest.mark.asyncio
+async def test_export_to_parquet():
+    """Test Parquet export functionality."""
+    service = ExportService()
+    test_data = [...]  # Same as above
+    
+    result = service.to_parquet(test_data)
+    assert isinstance(result, bytes)
+    # Parquet file signature
+    assert result.startswith(b"PAR1")
+```
+
+### Schema Validation Tests
+```python
+# tests/unit/test_schemas.py
+import pytest
+from pydantic import ValidationError
+from schemas import IndicatorResponse
+
+def test_indicator_response_valid():
+    """Valid indicator should construct."""
+    data = {
+        "id": "WB_001",
+        "name": "GDP",
+        "source": "WB",
+        "frequency": "annual",
+        "values": [{"year": 2023, "value": 100.5}]
+    }
+    
+    indicator = IndicatorResponse(**data)
+    assert indicator.id == "WB_001"
+    assert len(indicator.values) == 1
+
+def test_indicator_response_invalid_missing_id():
+    """Missing id should raise validation error."""
+    data = {
+        "name": "GDP",
+        "source": "WB",
+        "frequency": "annual",
+        "values": []
+    }
+    
+    with pytest.raises(ValidationError) as exc_info:
+        IndicatorResponse(**data)
+    
+    assert "id" in str(exc_info.value)
+```
+
+## Integration Tests
+
+### API Endpoint Tests
+```python
+# tests/integration/test_api_indicators.py
+import pytest
+from httpx import AsyncClient
+
+@pytest.mark.asyncio
+async def test_list_indicators_empty(client: AsyncClient):
+    """Empty database returns empty list."""
+    response = await client.get("/api/indicators")
+    assert response.status_code == 200
+    assert response.json() == []
+
+@pytest.mark.asyncio
+async def test_list_indicators_with_filter(client: AsyncClient, test_db):
+    """Filter by source."""
+    # Setup: Create test indicator
+    from models import Indicator
+    indicator = Indicator(
+        id="WB_001",
+        name="GDP",
+        source="WB",
+        frequency="annual"
+    )
+    test_db.add(indicator)
+    await test_db.commit()
+    
+    # Test with source filter
+    response = await client.get("/api/indicators?sources=WB")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["source"] == "WB"
+
+@pytest.mark.asyncio
+async def test_export_endpoint_with_csv(client: AsyncClient):
+    """Export endpoint returns CSV file."""
+    payload = {
+        "indicator_ids": ["WB_001"],
+        "format": "csv"
+    }
+    
+    response = await client.post("/api/export", json=payload)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/csv"
+    assert b"WB_001" in response.content
+```
+
+## React Component Tests
+
+### Component Testing with Vitest
+```typescript
+// frontend/__tests__/components/FilterPanel.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { FilterPanel } from '../../components/FilterPanel';
+import type { FilterState } from '../../types';
+
+describe('FilterPanel', () => {
+  const mockOnFilterChange = vi.fn();
+  
+  it('renders source checkboxes', () => {
+    render(
+      <FilterPanel
+        onFilterChange={mockOnFilterChange}
+        loading={false}
+      />
+    );
+    
+    expect(screen.getByLabelText(/World Bank/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/IMF/i)).toBeInTheDocument();
+  });
+  
+  it('calls onFilterChange when source is selected', () => {
+    render(
+      <FilterPanel
+        onFilterChange={mockOnFilterChange}
+        loading={false}
+      />
+    );
+    
+    const wbCheckbox = screen.getByLabelText(/World Bank/i);
+    fireEvent.click(wbCheckbox);
+    
+    expect(mockOnFilterChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedSources: ['WB']
+      })
+    );
+  });
+  
+  it('disables controls while loading', () => {
+    render(
+      <FilterPanel
+        onFilterChange={mockOnFilterChange}
+        loading={true}
+      />
+    );
+    
+    const wbCheckbox = screen.getByLabelText(/World Bank/i);
+    expect(wbCheckbox).toBeDisabled();
+  });
+});
+```
+
+### API Client Tests
+```typescript
+// frontend/__tests__/services/api.test.ts
+import { vi } from 'vitest';
+import { IndicatorAPI } from '../../services/api';
+
+describe('IndicatorAPI', () => {
+  const api = new IndicatorAPI();
+  
+  beforeEach(() => {
+    global.fetch = vi.fn();
+  });
+  
+  it('fetches indicators with filters', async () => {
+    const mockResponse = {
+      success: true,
+      data: [
+        {
+          id: 'WB_001',
+          name: 'GDP',
+          source: 'WB',
+          frequency: 'annual',
+          values: []
+        }
+      ]
+    };
+    
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    });
+    
+    const filters = {
+      selectedSources: ['WB'],
+      frequency: 'annual',
+      pageSize: 10,
+      pageNumber: 1
+    };
+    
+    const result = await api.getIndicators(filters);
+    
+    expect(result).toEqual(mockResponse.data);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('sources=WB')
+    );
+  });
+  
+  it('handles network errors', async () => {
+    (global.fetch as any).mockRejectedValueOnce(
+      new Error('Network timeout')
+    );
+    
+    const filters = {
+      selectedSources: [],
+      pageSize: 10,
+      pageNumber: 1
+    };
+    
+    await expect(api.getIndicators(filters)).rejects.toThrow();
+  });
+});
+```
+
+## Test Coverage Requirements
+
+### Backend Coverage Targets
+- **Services:** ≥95% coverage
+- **API Routes:** ≥90% coverage
+- **Schemas:** ≥90% coverage
+- **Models:** ≥80% coverage
+- **Overall:** ≥90% coverage
+
+### Frontend Coverage Targets
+- **Components:** ≥90% coverage
+- **Hooks:** ≥95% coverage
+- **Services:** ≥90% coverage
+- **Overall:** ≥90% coverage
+
+### Running Tests
+```bash
+# Backend - run with coverage report
+pytest --cov=services --cov=routers --cov-report=html --cov-fail-under=90
+
+# Frontend - run with coverage report
+npm run test:coverage
+
+# Both with watch mode
+pytest --watch
+npm run test:watch
+```
+
+---
+
+*Last Updated: December 31, 2025*
+*Project: ECODATA v2.7.2*
+*Status: Production Ready*

@@ -1,0 +1,153 @@
+---
+alwaysApply: true
+---
+
+**These 10 rules are NON-NEGOTIABLE and must be followed in all ECODATA development.**
+
+---
+
+## Rule 1: No Hardcoded Secrets
+- **Category:** Security
+- **Impact:** Critical - Data breach risk
+- **Forbidden in code:**
+  - Database passwords
+  - API keys (World Bank, IMF, FRED, WTO, Google, etc.)
+  - JWT secrets
+  - OAuth tokens
+  - AWS/Google Cloud credentials
+- **Required:** Use environment variables via `.env` files
+- **Encryption:** Sensitive data in database encrypted with industry standards
+
+## Rule 2: Type Safety Required
+- **Category:** Code Quality
+- **Impact:** High - Prevents runtime errors
+- **Requirements:**
+  - **Python:** Full type hints on ALL functions (`def func(x: str) -> int:`)
+  - **TypeScript:** Strict mode enabled in `tsconfig.json`
+  - **No Typing.Any:** Use specific types or generics
+  - **SQLAlchemy:** Always use type hints on model properties
+  - **Pydantic:** All schemas have type hints
+
+## Rule 3: Async/Await for I/O Operations
+- **Category:** Performance
+- **Impact:** High - Prevents blocking operations
+- **Requirements:**
+  - All database queries must be async
+  - All external API calls must be async
+  - Use `asyncio` for concurrent operations
+  - No synchronous blocking calls in FastAPI routes
+
+## Rule 4: Comprehensive Error Handling
+- **Category:** Reliability
+- **Impact:** Critical - Production stability
+- **Requirements:**
+  - All API routes have try-except blocks
+  - Database operations handle connection errors
+  - External API calls handle timeout/network errors
+  - Specific HTTP status codes (400, 404, 500, 504)
+  - User-friendly error messages (no technical stack traces)
+  - Logging with `logger.error()` for debugging
+
+## Rule 5: Single Feature Per Session
+- **Category:** Maintainability
+- **Impact:** High - Simplifies rollback and review
+- **Definition:** Implement ONE feature OR fix ONE bug per development session
+- **Exception:** Related changes to same file (test + implementation)
+- **Commit format:** `feat(scope): description` or `fix(scope): description`
+
+## Rule 6: Test Coverage >90%
+- **Category:** Quality Assurance
+- **Impact:** Critical - Prevents production failures
+- **Required Tests:**
+  1. **Unit Tests:** All services, utilities, models
+  2. **Integration Tests:** API endpoints with database
+  3. **E2E Tests:** Critical user workflows
+- **Minimum Pass Rate:** 90% tests must pass before deployment
+
+## Rule 7: Always Update Documentation
+- **Category:** Knowledge Management
+- **Impact:** High - Team collaboration
+- **Mandatory Updates:**
+  1. **README.md** - Feature description + usage example
+  2. **CHANGELOG.md** - Version number, date, detailed changes
+  3. **Code Comments** - JSDoc/docstrings for public functions
+  4. **Type docstrings** - Explain complex schemas
+- **Violation:** Cannot merge code without documentation
+
+## Rule 8: Data Validation at Boundaries
+- **Category:** Data Integrity & Security
+- **Impact:** High - Prevents invalid data
+- **Requirements:**
+  - **Frontend:** Zod or React Hook Form validation
+  - **API Routes:** Pydantic schema validation
+  - **Database:** SQLAlchemy constraints
+  - **External APIs:** Validate response structure
+  - **File uploads:** Check type, size, virus scan (if external)
+
+## Rule 9: Conventional Commits Format
+- **Category:** Version Control
+- **Impact:** Medium - History clarity
+- **Format:** `type(scope): description`
+- **Types:**
+  - `feat` - New feature
+  - `fix` - Bug fix
+  - `docs` - Documentation
+  - `test` - Tests only
+  - `refactor` - Code restructure (no behavior change)
+  - `perf` - Performance improvement
+  - `chore` - Dependencies, config
+- **Example:** `feat(export): add parquet format support`
+
+## Rule 10: Logging for Production Monitoring
+- **Category:** Observability
+- **Impact:** High - Identify production issues
+- **Requirements:**
+  - Use `logger.info()` for important events
+  - Use `logger.warning()` for potential issues
+  - Use `logger.error()` for actual errors
+  - Include context: user_id, indicator_id, batch_id
+  - Log performance metrics (request time, rows processed)
+  - Never log passwords or sensitive data
+
+---
+
+## Enforcement Policy
+
+### Severity Levels
+- **Critical:** Rules 1, 4, 6 - Cannot merge without compliance
+- **High:** Rules 2, 3, 7, 8, 10 - Code review required
+- **Medium:** Rules 5, 9 - Warnings in PR comments
+
+### Violation Consequences
+1. **First Violation:** Warning with explanation + resource link
+2. **Repeated Violation:** Code review required before merge
+3. **Security Violation (Rule 1):** Automatic rejection + team notification
+4. **Multiple Violations:** Cannot merge until ALL fixed
+
+### Reporting & Documentation
+- Use GitHub PR comments with rule reference
+- Tag violations in commit messages
+- Document exceptions in CHANGELOG.md
+- Critical violations require team consensus
+
+---
+
+## Quick Checklist
+
+Before submitting pull request:
+- [ ] No secrets in code (Rule 1)
+- [ ] All functions have type hints (Rule 2)
+- [ ] I/O operations are async (Rule 3)
+- [ ] Error handling on all routes (Rule 4)
+- [ ] Single feature/fix in this PR (Rule 5)
+- [ ] Tests passing >90% (Rule 6)
+- [ ] Documentation updated (Rule 7)
+- [ ] Input validation present (Rule 8)
+- [ ] Conventional commit message (Rule 9)
+- [ ] Logging added for monitoring (Rule 10)
+
+---
+
+*Last Updated: December 31, 2025*
+*Project: ECODATA v2.7.2*
+*Status: Production Ready*

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml logs --tail=50 backend 2>&1 | grep -A 10 -B 5 -i ''error\\|exception'' | tail -40 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml logs backend 2>&1 | grep -A 5 -B 2 -i ''database\\|table\\|metadata'' | head -50 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml logs backend 2>&1 | grep -A 2 -i ''create table\\|created successfully\\|ignoring duplicate'' | head -30 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml exec -T postgres psql -U ecodata_user -d ecodata -c \"\"\\\\d indicators\"\" 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml exec -T postgres psql -U ecodata_user -d ecodata -c \"\"SELECT source, code, name_en FROM indicators ORDER BY source, code;\"\" 2>&1\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && git pull origin clean 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml ps backend 2>&1\")",
+      "Bash(curl:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && find backend -name ''*.pyc'' -delete && find backend -name ''__pycache__'' -type d -exec rm -rf {} + 2>/dev/null ; docker-compose -f docker-compose.production.yml restart backend 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"docker rm -f 86bc3f42f315 && cd /opt/ecodata && docker-compose -f docker-compose.production.yml up -d backend 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker-compose -f docker-compose.production.yml logs --tail=60 backend 2>&1 | tail -60 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && git pull origin clean && docker-compose -f docker-compose.production.yml restart backend 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"cd /opt/ecodata && docker rm -f econdata-backend && docker-compose -f docker-compose.production.yml build --no-cache backend && docker-compose -f docker-compose.production.yml up -d backend 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"docker exec econdata-backend grep -n ''from.*database import get_db'' /app/routers/stock_routers/stocks.py 2>&1\")",
+      "Bash(\"/c/Program Files/PuTTY/plink.exe\" -hostkey \"SHA256:WCIu/MntsW6iVVem37UoYsMM8APL+/MQYe6vtbTmt2g\" -pw \"EcoData2025VPS@Secure-Pass123\" root@212.85.24.158 \"ls -la /opt/ecodata/backend/database.py 2>&1\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
