@@ -61,8 +61,7 @@ services:
     container_name: hotel-frontend
     restart: unless-stopped
     depends_on:
-      hotel-backend:
-        condition: service_healthy
+      - hotel-backend
     ports:
       - "8003:80"
     networks:
