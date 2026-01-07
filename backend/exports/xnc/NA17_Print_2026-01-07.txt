@@ -1,0 +1,45 @@
+======================================================================
+PHIẾU KHAI BÁO TẠM TRÚ CHO NGƯỜI NƯỚC NGOÀI (MẪU NA17)
+Theo Thông tư số 04/2015/TT-BCA
+======================================================================
+
+Kính gửi: Công an Phường Bến Nghé, Quận 1
+
+Tên cơ sở lưu trú: Sunrise Apartment
+Địa chỉ: 123 Nguyen Hue, District 1, HCM
+Điện thoại: 0901234567
+
+----------------------------------------------------------------------
+DANH SÁCH NGƯỜI NƯỚC NGOÀI TẠM TRÚ (Ngày 07/01/2026)
+----------------------------------------------------------------------
+
+[1] JOHN SMITH
+    Giới tính: Nam
+    Ngày sinh: 15/01/1990
+    Quốc tịch: United States
+    Số hộ chiếu: AB4552494
+    Tạm trú: 08/01/2026 - 11/01/2026
+    Địa chỉ: 123 Nguyen Hue, District 1, HCM
+
+[2] MARIE DUPONT
+    Giới tính: Nam
+    Ngày sinh: 15/01/1990
+    Quốc tịch: France
+    Số hộ chiếu: AB3218093
+    Tạm trú: 09/01/2026 - 12/01/2026
+    Địa chỉ: 123 Nguyen Hue, District 1, HCM
+
+[3] TANAKA YUKI
+    Giới tính: Nam
+    Ngày sinh: 15/01/1990
+    Quốc tịch: Japan
+    Số hộ chiếu: AB0963792
+    Tạm trú: 07/01/2026 - 10/01/2026
+    Địa chỉ: 123 Nguyen Hue, District 1, HCM
+
+----------------------------------------------------------------------
+                              NGƯỜI KHAI BÁO
+                              (Ký, ghi rõ họ tên)
+
+
+                              ___________________

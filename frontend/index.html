@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel PMS - Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🏨</span>
+                    <span class="logo-text">Hotel PMS</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-page="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </li>
+                    <li class="nav-item" data-page="bookings">
+                        <span class="nav-icon">📅</span>
+                        <span class="nav-text">Bookings</span>
+                    </li>
+                    <li class="nav-item" data-page="rooms">
+                        <span class="nav-icon">🚪</span>
+                        <span class="nav-text">Rooms</span>
+                    </li>
+                    <li class="nav-item" data-page="guests">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Guests</span>
+                    </li>
+                    <li class="nav-item" data-page="reports">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-text">XNC Reports</span>
+                    </li>
+                    <li class="nav-item" data-page="locks">
+                        <span class="nav-icon">🔐</span>
+                        <span class="nav-text">Smart Locks</span>
+                    </li>
+                    <li class="nav-item" data-page="housekeeping">
+                        <span class="nav-icon">🧹</span>
+                        <span class="nav-text">Housekeeping</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <div class="user-details">
+                        <span class="user-name">Admin</span>
+                        <span class="user-role">Owner</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1 id="page-title">Dashboard</h1>
+                    <span class="header-date" id="current-date"></span>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="btn btn-outline" id="sync-btn">
+                            <span>🔄</span> Sync Channex
+                        </button>
+                        <button class="btn btn-primary" id="new-booking-btn">
+                            <span>➕</span> New Booking
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Page -->
+            <div class="page active" id="page-dashboard">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon airbnb">🏠</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="total-bookings">12</span>
+                            <span class="stat-label">Active Bookings</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon checkin">📥</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="today-checkins">3</span>
+                            <span class="stat-label">Today Check-ins</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon checkout">📤</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="today-checkouts">2</span>
+                            <span class="stat-label">Today Check-outs</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon occupancy">📈</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="occupancy-rate">78%</span>
+                            <span class="stat-label">Occupancy Rate</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="quick-actions">
+                        <button class="action-card" onclick="generateXNCReport()">
+                            <span class="action-icon">📋</span>
+                            <span class="action-text">Generate XNC Report</span>
+                        </button>
+                        <button class="action-card" onclick="sendPasscodes()">
+                            <span class="action-icon">🔑</span>
+                            <span class="action-text">Send Passcodes</span>
+                        </button>
+                        <button class="action-card" onclick="syncBookings()">
+                            <span class="action-icon">🔄</span>
+                            <span class="action-text">Sync All Channels</span>
+                        </button>
+                        <button class="action-card" onclick="viewLocks()">
+                            <span class="action-icon">🔐</span>
+                            <span class="action-text">Manage Locks</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Today's Bookings -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Today's Activity</h2>
+                        <a href="#" class="view-all" onclick="showPage('bookings')">View All →</a>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Guest</th>
+                                    <th>Room</th>
+                                    <th>OTA</th>
+                                    <th>Status</th>
+                                    <th>Passcode</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="today-bookings">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings Page -->
+            <div class="page" id="page-bookings">
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">All Bookings</h2>
+                        <div class="filters">
+                            <select id="filter-status" class="filter-select">
+                                <option value="">All Status</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="checked_in">Checked In</option>
+                                <option value="checked_out">Checked Out</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <select id="filter-ota" class="filter-select">
+                                <option value="">All OTAs</option>
+                                <option value="airbnb">Airbnb</option>
+                                <option value="booking">Booking.com</option>
+                                <option value="agoda">Agoda</option>
+                                <option value="trip">Trip.com</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Guest</th>
+                                    <th>Room</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>OTA</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-bookings">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rooms Page -->
+            <div class="page" id="page-rooms">
+                <div class="section">
+                    <h2 class="section-title">Room Status</h2>
+                    <div class="rooms-grid" id="rooms-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- XNC Reports Page -->
+            <div class="page" id="page-reports">
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">XNC Immigration Reports</h2>
+                        <button class="btn btn-primary" onclick="generateXNCReport()">
+                            <span>📋</span> Generate Today's Report
+                        </button>
+                    </div>
+
+                    <div class="report-form">
+                        <div class="form-group">
+                            <label>Report Date</label>
+                            <input type="date" id="report-date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Property</label>
+                            <select id="report-property" class="form-input">
+                                <option value="all">All Properties</option>
+                                <option value="prop1">Sunrise Apartment</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Format</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="report-format" value="csv" checked>
+                                    CSV (Recommended)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="report-format" value="xml">
+                                    XML
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pending-guests">
+                        <h3>Pending Guests for XNC Report</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select-all-guests"></th>
+                                        <th>Name</th>
+                                        <th>Nationality</th>
+                                        <th>Passport</th>
+                                        <th>Check-in</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pending-guests">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Locks Page -->
+            <div class="page" id="page-locks">
+                <div class="section">
+                    <h2 class="section-title">Smart Lock Management</h2>
+                    <div class="locks-grid" id="locks-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guests Page -->
+            <div class="page" id="page-guests">
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Guest Management</h2>
+                        <button class="btn btn-primary" onclick="showPassportScanModal()">
+                            <span>🛂</span> Scan Passport
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Nationality</th>
+                                    <th>Passport</th>
+                                    <th>Booking</th>
+                                    <th>XNC Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-guests">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Housekeeping Page -->
+            <div class="page" id="page-housekeeping">
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">🧹 Cleaning Status</h2>
+                        <button class="btn btn-primary" onclick="showTaskAssignModal()">
+                            <span>➕</span> Assign Task
+                        </button>
+                    </div>
+                    <div class="rooms-grid" id="housekeeping-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">📋 Active Tasks</h2>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Task Type</th>
+                                    <th>Assigned To</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="housekeeping-tasks">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">⚠️ Maintenance Issues</h2>
+                        <button class="btn btn-outline" onclick="showReportIssueModal()">
+                            <span>🔧</span> Report Issue
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Issue</th>
+                                    <th>Severity</th>
+                                    <th>Reported</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="maintenance-issues">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Modal content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav" id="mobile-nav">
+        <div class="mobile-nav-item active" data-page="dashboard" onclick="mobileNav('dashboard')">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Home</span>
+        </div>
+        <div class="mobile-nav-item" data-page="bookings" onclick="mobileNav('bookings')">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Bookings</span>
+        </div>
+        <div class="mobile-nav-item" data-page="rooms" onclick="mobileNav('rooms')">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-label">Rooms</span>
+        </div>
+        <div class="mobile-nav-item" data-page="guests" onclick="mobileNav('guests')">
+            <span class="nav-icon">👥</span>
+            <span class="nav-label">Guests</span>
+        </div>
+        <div class="mobile-nav-item" onclick="toggleSidebar()">
+            <span class="nav-icon">☰</span>
+            <span class="nav-label">More</span>
+        </div>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

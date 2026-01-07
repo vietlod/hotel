@@ -1,0 +1,10 @@
+﻿# Tên cơ sở lưu trú: Sunrise Apartment
+# Địa chỉ: 123 Nguyen Hue, District 1, HCM
+# Điện thoại: 0901234567
+# Kính gửi: Công an Phường Bến Nghé, Quận 1
+# Ngày báo cáo: 07/01/2026
+#
+STT,Họ và tên,Giới tính,Ngày sinh,Quốc tịch,Số hộ chiếu,Loại giấy tờ,Ngày nhập cảnh,Cửa khẩu nhập cảnh,Mục đích nhập cảnh,Tạm trú từ ngày,Đến ngày,Loại thị thực,Số thị thực,Ngày cấp thị thực,Cơ quan cấp thị thực
+1,JOHN SMITH,Nam,15/01/1990,United States,AB4552494,Hộ chiếu phổ thông,08/01/2026,Sân bay Tân Sơn Nhất,Du lịch,08/01/2026,11/01/2026,,,,
+2,MARIE DUPONT,Nam,15/01/1990,France,AB3218093,Hộ chiếu phổ thông,09/01/2026,Sân bay Tân Sơn Nhất,Du lịch,09/01/2026,12/01/2026,,,,
+3,TANAKA YUKI,Nam,15/01/1990,Japan,AB0963792,Hộ chiếu phổ thông,07/01/2026,Sân bay Tân Sơn Nhất,Du lịch,07/01/2026,10/01/2026,,,,
